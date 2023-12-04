@@ -1,0 +1,22 @@
+/************************** 
+出来た顔のエリア
+***************************/
+
+#face_create {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+#face_create img {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+}
+
+/************************** 
+顔のパーツ
+***************************/
+#parts img {
+    width: 80px;
+}

@@ -1,0 +1,407 @@
+<!-- avatar.html -->
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+        content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
+    <!-- CSS & Tailwind -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <title>アバター生成</title>
+</head>
+
+<body>
+    <section id="header" class="bg-gray-200"></section>
+    <section id="camera" class="bg-gray-200">
+        <!-- カメラボタンの追加 -->
+        <button id="cameraButton">カメラを起動</button>
+        <!-- カメラ停止ボタンの追加 -->
+        <button id="stopCameraButton">カメラを停止</button>
+        <!-- 撮影ボタンの追加 -->
+        <button id="captureButton">撮影</button>
+        <!-- 保存ボタンの追加 -->
+        <button id="saveButton" style="display:none;">保存</button>
+        <!-- ビデオ要素の追加 -->
+        <video id="cameraStream" width="640" height="480" autoplay style="display:none;"></video>
+        <!-- 撮影した画像を表示するための要素 -->
+        <img id="yourImageElementId" src="" alt="Generated Image" style="display: none;">
+        <img id="capturedImage" style="display:none;">
+
+        <!-- <img src="{{ url_for('static', filename=image_path) }}" alt="Generated Image"> -->
+
+    </section>
+
+    <section id="stampWrapper"></section>
+    <section id="stampCountWrapper" class="bg-gray-200"></section>
+
+    <script src="{{ url_for('static', filename='js/avatar.js') }}"></script>
+
+    <script type="module">
+        //------------------------------------------
+        // ▼firebaseプロジェクトとjavaScriptを連携させる
+        //------------------------------------------
+
+        // 必要な機能をSDKからインポート
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+
+        // firebase firestoreとやり取りをする設定
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp,
+            query,
+            orderBy, //データのソート
+            onSnapshot, // Firestore 上に保存されているデータを取得
+            doc,
+            deleteDoc,
+            updateDoc,
+            getDocs,
+            getDoc,
+            increment,
+        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+        // firebase storageとやり取りをする設定
+        import {
+            getStorage,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+
+        // ウェブアプリのFirebaseの設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyBs-rcINsUSZe7bD7OeLTrNcXm6-OInABg",
+            authDomain: "tvcha-9cae7.firebaseapp.com",
+            projectId: "tvcha-9cae7",
+            storageBucket: "tvcha-9cae7.appspot.com",
+            messagingSenderId: "866848033597",
+            appId: "1:866848033597:web:c6887382eb14ee58351354",
+        };
+
+        // Firebaseの初期化
+        const app = initializeApp(firebaseConfig);
+
+        // FirebaseアプリとCloud Storageの連携を初期化しセットアップする
+        const storage = getStorage(app);
+
+        // dbに対してデータの追加や取得ができるようにする
+        const db = getFirestore(app);
+
+        // カメラボタンの要素を取得
+        const cameraButton = document.getElementById('cameraButton');
+        const stopCameraButton = document.getElementById('stopCameraButton');
+        const captureButton = document.getElementById('captureButton');
+        const saveButton = document.getElementById('saveButton');
+        const cameraStream = document.getElementById('cameraStream');
+        const capturedImage = document.getElementById('capturedImage');
+        let stream = null;
+
+
+        // カメラを起動する関数
+        const startCamera = () => {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((mediaStream) => {
+                    stream = mediaStream;
+                    cameraStream.srcObject = mediaStream;
+                    cameraStream.play();
+
+                    // ここにカメラストリームを処理するコードを追加
+                    // console.log("カメラが起動しました");
+                })
+                .catch((error) => {
+                    console.error("カメラの起動に失敗しました:", error);
+                });
+        }
+        const stopCamera = () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                cameraStream.srcObject = null;
+            }
+        }
+        const captureImage = () => {
+            // カメラストリームからの画像をキャンバスに描画
+            const canvas = document.createElement('canvas');
+            canvas.width = cameraStream.videoWidth;
+            canvas.height = cameraStream.videoHeight;
+            canvas.getContext('2d').drawImage(cameraStream, 0, 0, canvas.width, canvas.height);
+
+            // キャンバスからの画像をcapturedImageに設定
+            capturedImage.src = canvas.toDataURL('image/png');
+            capturedImage.style.display = 'block';
+            saveButton.style.display = 'block';
+        }
+
+        const saveImage = () => {
+            // 現在のカメラストリームを取得
+            const stream = cameraStream.srcObject;
+
+            // カメラストリームの各トラックを停止
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+
+            // ビデオ要素を非表示に設定
+            cameraStream.style.display = 'none';
+
+            // canvas要素を作成して、ビデオのフレームを描画
+            // const canvas = document.createElement('canvas');
+            // canvas.width = cameraStream.videoWidth;
+            // canvas.height = cameraStream.videoHeight;
+            // canvas.getContext('2d').drawImage(cameraStream, 0, 0, canvas.width, canvas.height);
+
+            // 描画した画像を保存
+            // canvas.toBlob((blob) => {
+            //     const formData = new FormData();
+            //     formData.append('image', blob, 'image.png');
+
+            //     fetch('/upload', {
+            //         method: 'POST',
+            //         body: formData
+            //     })
+            //         .then(response => response.json()) // JSONレスポンスを期待
+            //         .then(data => {
+
+            //             // 生成された画像のパスを取得
+            //             const imagePath = data.image_path;
+
+            //             // 生成された画像を表示
+            //             const imageElement = document.getElementById('generatedImage');
+            //             imageElement.src = '/static/' + imagePath;
+            //             imageElement.style.display = 'block';
+            //         })
+
+            //     // .then(response => response.text())
+            //     // .then(data => {
+            //     //     console.log(data);
+            //     // })
+            //     // .catch(error => {
+            //     //     console.error('Error:', error);
+            //     // });
+            // }, 'image/png');
+        }
+
+        // サーバーから画像のパスを取得してキャンバスに描画する関数
+        // const loadImageToCanvas = (imagePath) => {
+        //     const canvas = document.createElement('canvas');
+        //     const ctx = canvas.getContext('2d');
+        //     const image = new Image();
+
+        //     image.onload = () => {
+        //         canvas.width = image.width;
+        //         canvas.height = image.height;
+        //         ctx.drawImage(image, 0, 0);
+        //         // キャンバスをDOMに追加するか、既存のキャンバスを置き換える
+        //         document.body.appendChild(canvas); // 例：bodyに追加
+        //     };
+
+        //     // サーバーからの画像パスを設定
+        //     image.src = imagePath;
+        // };
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const cameraButton = document.getElementById('cameraButton');
+            const stopCameraButton = document.getElementById('stopCameraButton');
+            const captureButton = document.getElementById('captureButton');
+            const saveButton = document.getElementById('saveButton');
+            const cameraStream = document.getElementById('cameraStream');
+
+            // カメラを起動するボタンのイベントリスナー
+            cameraButton.addEventListener('click', () => {
+                startCamera(); // カメラを起動する関数を呼び出し
+                cameraStream.style.display = 'block'; // ビデオ要素を表示
+            });
+
+            // カメラを停止するボタンのイベントリスナー
+            stopCameraButton.addEventListener('click', stopCamera); // カメラを停止する関数を呼び出し
+
+            // 撮影ボタンのイベントリスナー
+            captureButton.addEventListener('click', captureImage); // 画像を撮影する関数を呼び出し
+
+            // 画像を保存するボタンのイベントリスナー
+            // saveButton.addEventListener('click', saveImage); // 画像を保存する関数を呼び出し
+        });
+
+
+        // OpenAI APIを使用して画像を生成する関数
+        // const generateImage = (data) => {
+        //     console.log("画像生成開始"); // 処理開始をログに記録
+        //     return fetch('https://api.openai.com/v1/images/generations', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'Authorization': `Bearer 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`
+        //         },
+
+        //         body: JSON.stringify({
+        //             prompt: `誇張された、陽気な表情をした人物のイラストをLINEスタンプスタイルで作成。キャラクターは${data}で、体が小さいことでカートゥーンのような側面を強調。顔の特徴は、大胆な線と明るい色で簡略化され、スタイリッシュに表現される。背景はシンプルでクリーン。`,
+        //             size: "1024x1024"
+        //         }),
+
+        //     })
+        //         .then(response => response.json())
+        //         .then(responseData => {
+        //             if (responseData && responseData.data && responseData.data.length > 0) {
+        //                 const imageUrl = responseData.data[0].url;
+        //                 console.log("生成された画像のURL:", imageUrl);
+        //                 return imageUrl;
+        //             } else {
+        //                 throw new Error('画像生成に失敗しました。');
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error("エラーが発生しました:", error); // エラーをログに記録
+        //         });
+        // };
+
+        // 画像をHTMLに表示する関数
+        // const displayImage = (imageUrl) => {
+        //     const imageElement = document.createElement('img');
+        //     imageElement.src = imageUrl;
+        //     document.body.appendChild(imageElement);
+        // };
+
+        const uploadImageAndSaveData = (imageBlob) => {
+
+            // ビデオ要素を非表示に設定
+            cameraStream.style.display = 'none';
+
+            const storageRef = ref(storage, `images/${new Date().getTime()}.png`);
+
+            uploadBytes(storageRef, imageBlob)
+                .then(snapshot => getDownloadURL(snapshot.ref))
+                .then(downloadURL => {
+                    console.log("ダウンロード URL:", downloadURL);
+
+                    // ここでFlaskサーバーにdownloadURLを送信して解析結果を受け取る
+                    return fetch('/analyze-image', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ image_url: downloadURL })
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('解析結果:', data);
+
+                    const prompt = `誇張された、陽気な表情をした人物のイラストをLINEスタンプスタイルで作成。キャラクターの特徴:  ${data}。体が小さいことでカートゥーンのような側面を強調。顔の特徴は、大胆な線と明るい色で簡略化され、スタイリッシュに表現される。背景は白色に。`;
+                    console.log(prompt);
+                    // 解析結果を基に新しい画像を生成するリクエストを送信
+
+                    return fetch('/generate-image', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ prompt: prompt })  // 解析結果に基づくプロンプト
+                    });
+                    console.log("test")
+
+                })
+                .then(response => response.json())  // レスポンスをJSONとして解析
+                .then(data => {
+
+                    // captureImageで生成された画像を非表示にする
+                    // capturedImage.style.display = 'none';
+
+                    // 生成された画像のパスを取得
+                    const imagePath = data.image_path;
+                    console.log('画像パス:', data.image_path);
+
+                    // HTML内のimg要素を取得
+                    const imageElement = document.getElementById('yourImageElementId');
+
+                    // img要素のsrc属性を更新して画像を表示
+                    imageElement.src = '/static/' + imagePath;
+                    imageElement.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('エラーが発生しました:', error);
+                });
+        };
+
+        document.getElementById('saveButton').addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            const cameraStream = document.getElementById('cameraStream');
+            canvas.width = cameraStream.videoWidth;
+            canvas.height = cameraStream.videoHeight;
+            canvas.getContext('2d').drawImage(cameraStream, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(uploadImageAndSaveData, 'image/png');
+        });
+
+        // const imageElement = document.createElement('img');
+        // imageElement.id = 'yourImageElementId';
+        // imageElement.src = ''; // 初期状態ではsrcは空
+        // imageElement.alt = 'Generated Image';
+        // imageElement.style.display = 'none'; // 初期状態では非表示
+
+        // コレクションの名前を定義
+        // const collectionName = "tvcha";
+        // const collectionUsernName = "tvcha-user";
+        // const collectionJudgeName = "uretoru_judge";
+
+        // 🔽 データ取得条件の指定（今回はorder順に並び替えて取得）
+        // const q = query(collection(db, collectionName), orderBy("order", "desc"));
+
+        // 🔽 データ取得条件の指定
+        // const user_q = query(collection(db, collectionUsernName));
+
+        // 🔽 データ取得条件の指定
+        // const judge_q = query(collection(db, collectionJudgeName));
+
+        // 画像アップロードとFirestoreへのデータ保存の関数
+        // const uploadImageAndSaveData = () => {
+        //     console.log("test");
+        //     const imgFile = document.getElementById('img').files[0];
+        //     if (!imgFile) {
+        //         console.log('画像ファイルが選択されていません。');
+        //         return;
+        //     }
+
+        //     const storageRef = ref(storage, `images/${imgFile.name}`);
+        //     uploadBytes(storageRef, imgFile)
+        //         .then(snapshot => getDownloadURL(snapshot.ref))
+        //         .then(downloadURL => {
+        //             console.log("ダウンロード URL:", downloadURL);
+
+        //             // const postData = {
+        //             //     img: downloadURL,
+        //             //     point: Number(document.getElementById('point').value),
+        //             //     count: Number(document.getElementById('count').value),
+        //             //     order: 1, // ここはドキュメント数に基づいて設定する
+        //             //     time: serverTimestamp(),
+        //             // };
+
+        //             // return addDoc(collection(db, "tvcha"), postData);
+        //         })
+        //         .then(() => {
+        //             console.log("データを Firestore に保存しました");
+        //             // document.getElementById('img').value = '';
+        //             // document.getElementById('point').value = '';
+        //             // document.getElementById('count').value = '';
+        //             // document.getElementById('send').disabled = true;
+        //         })
+        //         .catch(error => {
+        //             console.error("エラーが発生しました:", error);
+        //         });
+        // };
+
+        // // イベントリスナーの設定
+        // document.getElementById('saveButton').addEventListener('click', uploadImageAndSaveData);
+
+
+    </script>
+
+</body>
+
+</html>

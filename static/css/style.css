@@ -1,0 +1,327 @@
+::-webkit-scrollbar {
+    /* スクロールバー外し */
+    display: none;
+}
+
+body {
+    height: auto;
+    background-repeat: no-repeat;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+
+/************************** 
+ユーザー画面 CSSエリア
+***************************/
+/*真ん中の縦の線を表すスタイル */
+#stampWrapper:after {
+    content: "";
+    position: absolute;
+    top: 5%;
+    bottom: 5%;
+    left: 50%;
+    /* 線の幅 */
+    width: 0.5px;
+    /* 線の色 */
+    background-color: gray;
+    /* 中央に配置 */
+    transform: translateX(-50%);
+}
+
+.stampContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 400px;
+}
+
+/*スタンプは４つづつ並べる */
+.stampContainer:after {
+    content: "";
+    width: 90px;
+    height: 0px;
+}
+
+.stampContainer:before {
+    content: "";
+    width: 90px;
+    height: 0px;
+    order: 1;
+}
+
+.image-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.image {
+    width: 75px;
+    height: 75px;
+    margin: 10px 10px 0px 10px;
+    /* アニメーションの時間を調整 */
+    animation-duration: 0.5s;
+    /* タイミング関数を指定 */
+    animation-timing-function: ease;
+    /* アニメーションの繰り返し回数を指定 */
+    animation-iteration-count: 1;
+    /* アニメーション完了後に最終スタイルを保持 */
+    animation-fill-mode: forwards;
+    /* デフォルトの透明度 */
+    /* opacity: 1; */
+    /* 透明度の変更をアニメーションする */
+    /* transition: opacity 1s; */
+}
+
+/* スタンプがクリックされたときのアニメーション */
+.clicked-image {
+    /* アニメーション名を指定 */
+    animation-name: bounceAndExit;
+    /* アニメーションの時間を調整 */
+    animation-duration: 0.5s;
+    /* タイミング関数を指定 */
+    animation-timing-function: ease;
+    /* アニメーションの繰り返し回数を指定 */
+    animation-iteration-count: 1;
+    /* アニメーション完了後に最終スタイルを保持 */
+    animation-fill-mode: forwards;
+    /* 透明度を指定するためのクラス */
+    opacity: 0.5;
+}
+
+/* スタンプが跳ねるアニメーションのキーフレーム */
+@keyframes bounceAndExit {
+
+    0%,
+    20% {
+        transform: translateY(0);
+        /* Y軸方向に移動しない */
+    }
+
+    30% {
+        transform: translateY(10px);
+        /* Y軸方向に10px移動 */
+    }
+
+    50% {
+        transform: translateY(20px);
+        /* Y軸方向に20px移動 */
+    }
+
+    60% {
+        transform: translateY(10px);
+        /* Y軸方向に10px移動 */
+    }
+
+    100% {
+        transform: translateY(-100vh);
+        /* Y軸方向に画面の高さ分 (-100vh) 移動 */
+    }
+}
+
+/* 透明度を指定するためのクラス */
+.never-clickable {
+    opacity: 0.3;
+    pointer-events: none;
+    transition: opacity 0.5s;
+}
+
+/* トグルボタン */
+#toggle:checked+div {
+    background-color: #27ae7d;
+}
+
+#toggle:checked+div .dot {
+    transform: translateX(80%);
+}
+
+.dotted-circles-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* height: 100px;  */
+    position: relative;
+}
+
+
+.dotted-circle {
+    /* width: 100px; */
+    /* 丸のサイズを調整 */
+    /* height: 100px; */
+    /* 丸のサイズを調整 */
+    border: 2px dotted black;
+    /* 点線のスタイルと色を設定 */
+    border-radius: 50%;
+    /* 丸くするための設定 */
+    /* margin: 0 10px; */
+    /* 丸同士の間隔を調整 */
+
+    display: flex;
+    /* flexboxを使用して中央揃えを実現する */
+    align-items: center;
+    /* 垂直方向の中央揃え */
+    justify-content: center;
+    /* 水平方向の中央揃え */
+    font-size: 24px;
+    /* 数字のフォントサイズ。必要に応じて調整 */
+    font-weight: bold;
+    /* 数字のフォントを太字にする */
+}
+
+.coin-design {
+    width: 100px;
+    /* 丸のサイズを調整 */
+    height: 100px;
+    /* 丸のサイズを調整 */
+    border: 10px solid #ffd400;
+    /* 点線のスタイルと色を設定 */
+    border-radius: 100%;
+    background: #e5c10b;
+    box-shadow: inset 0 0 0 2px #cca83d;
+
+    margin: 0 10px;
+    /* 丸同士の間隔を調整 */
+
+    display: flex;
+    /* flexboxを使用して中央揃えを実現する */
+    align-items: center;
+    /* 垂直方向の中央揃え */
+    justify-content: center;
+    /* 水平方向の中央揃え */
+    font-size: 48px;
+    /* 数字のフォントサイズ。必要に応じて調整 */
+    font-weight: bold;
+    /* 数字のフォントを太字にする */
+
+    /* color: white; */
+    color: #ffd400;
+    text-align: center;
+    text-shadow: 2px 2px 0 #cca83d;
+}
+
+#stampWrapper {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s forwards;
+}
+
+
+/* status2と3の時のクラス */
+.gray-out {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    pointer-events: none;
+    /* クリックを無効にする場合 */
+}
+
+
+
+
+/************************** 
+ウレトルクイズ テレビ画面
+***************************/
+
+.overlay {
+    -ms-overflow-style: none;
+}
+
+
+#AGroupCount {
+    font-family: 'Fjalla One', sans-serif;
+    color: white;
+    vertical-align: bottom;
+    right: calc(100% + -30px);
+    transform: translateX(100%);
+    font-weight: bold;
+    letter-spacing: 1px;
+    z-index: 4;
+    position: relative;
+    text-shadow:
+        2px 2px 2px #000080, -2px -2px 2px #000080,
+        -2px 2px 2px #000080, 2px -2px 2px #000080,
+        2px 0px 2px #000080, -2px 0px 2px #000080,
+        0px 2px 2px #000080, 0px -2px 2px #000080;
+}
+
+#AGroupPercentage {
+    font-family: 'Fjalla One', sans-serif;
+    color: white;
+    vertical-align: bottom;
+    right: calc(100% + -30px);
+    transform: translateX(100%);
+    font-weight: bold;
+    letter-spacing: 1px;
+    z-index: 4;
+    position: relative;
+    text-shadow:
+        2px 2px 2px #000080, -2px -2px 2px #000080,
+        -2px 2px 2px #000080, 2px -2px 2px #000080,
+        2px 0px 2px #000080, -2px 0px 2px #000080,
+        0px 2px 2px #000080, 0px -2px 2px #000080;
+}
+
+#Apercentage {
+    font-size: 40%;
+    font-weight: 700;
+    position: absolute;
+    top: 60px;
+    right: -140px;
+}
+
+#BGroupCount {
+    font-family: 'Fjalla One', sans-serif;
+    color: white;
+    vertical-align: bottom;
+    left: calc(100% - 90px);
+    transform: translateX(-120%);
+    font-weight: bold;
+    letter-spacing: 1px;
+    z-index: 4;
+    position: relative;
+    text-shadow:
+        2px 2px 2px #8B0000, -2px -2px 2px #8B0000,
+        -2px 2px 2px #8B0000, 2px -2px 2px #8B0000,
+        2px 0px 2px #8B0000, -2px 0px 2px #8B0000,
+        0px 2px 2px #8B0000, 0px -2px 2px #8B0000;
+}
+
+#BGroupPercentage {
+    font-family: 'Fjalla One', sans-serif;
+    color: white;
+    vertical-align: bottom;
+    left: calc(100% - 90px);
+    transform: translateX(-80%);
+    font-weight: bold;
+    letter-spacing: 1px;
+    z-index: 4;
+    position: relative;
+    text-shadow:
+        2px 2px 2px #8B0000, -2px -2px 2px #8B0000,
+        -2px 2px 2px #8B0000, 2px -2px 2px #8B0000,
+        2px 0px 2px #8B0000, -2px 0px 2px #8B0000,
+        0px 2px 2px #8B0000, 0px -2px 2px #8B0000;
+}
+
+#Bpercentage {
+    font-size: 40%;
+    font-weight: 700;
+    position: absolute;
+    top: 60px;
+    right: 5px;
+}
